@@ -1,6 +1,7 @@
 package com.review.moviesreviewservice.domain
 
 import com.review.moviesreviewservice.dto.AddMovieReviewDto
+import com.review.moviesreviewservice.dto.UpdateMovieReviewDto
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 import org.springframework.data.annotation.Id
@@ -13,13 +14,13 @@ data class Review(
     val reviewId: String,
     @NotNull(message = "평가하고자 하는 영화의 아이디는 null이 아니어야 합니다.")
     val movieInfoId:Long,
-    val comment:String,
+    var comment:String,
     @Min(value = 0L, message="평가 점수는 음수가 아니어야 합니다.")
-    val rating: Double
+    var rating: Double
 ) {
 
     companion object{
-        fun of(addMovieReviewDto: AddMovieReviewDto): Review{
+        fun of(addMovieReviewDto: AddMovieReviewDto):Review{
             return Review(
                 addMovieReviewDto.reviewId,
                 addMovieReviewDto.movieInfoId,
@@ -27,5 +28,10 @@ data class Review(
                 addMovieReviewDto.rating,
             )
         }
+    }
+
+    fun update(updateReviewDto:UpdateMovieReviewDto){
+        this.comment = updateReviewDto.comment
+        this.rating = updateReviewDto.rating
     }
 }
