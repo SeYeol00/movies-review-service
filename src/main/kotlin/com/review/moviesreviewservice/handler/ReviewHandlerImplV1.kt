@@ -12,6 +12,7 @@ import jakarta.validation.Validator
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
@@ -137,11 +138,24 @@ class ReviewHandlerImplV1(
 
 
     override fun deleteReview(request: ServerRequest): Mono<ServerResponse> {
-        TODO("Not yet implemented")
+        val pathVariable: String = request.pathVariable("id")
+        // 해당 객체 찾기
+        val review: Mono<Review> = reviewReactiveRepository.findById(pathVariable)
+        // Mono<ServerResponse>로 변환해야 한다.
+        return review.flatMap {
+            reviewReactiveRepository.deleteById(pathVariable)
+            .then(ServerResponse.noContent().build())
+        }
     }
-
+    // 쌓인 Sink를 보내주는 로직
     override fun getReviewsStream(request: ServerRequest): Mono<ServerResponse> {
-        TODO("Not yet implemented")
+        return ServerResponse.ok()
+            // Stream 용 콘텐트 타입
+            .contentType(MediaType.APPLICATION_NDJSON)
+            // 바디에는 Sink에 담긴 것을 Flux로 변환해서 보내주기
+            .body(reviewSink.asFlux(),Review::class.java)
+            .log()
+
     }
 
 }
