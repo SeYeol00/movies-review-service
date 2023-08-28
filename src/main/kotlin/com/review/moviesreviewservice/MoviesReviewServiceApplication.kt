@@ -7,5 +7,5 @@ import org.springframework.boot.runApplication
 class MoviesReviewServiceApplication
 
 fun main(args: Array<String>) {
-    runApplication<MoviesReviewServiceApplication>(*args)
+	runApplication<MoviesReviewServiceApplication>(*args)
 }
