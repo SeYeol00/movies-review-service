@@ -6,7 +6,6 @@ import com.review.moviesreviewservice.dto.AddMovieReviewDto
 import com.review.moviesreviewservice.dto.GetMovieReviewDto
 import com.review.moviesreviewservice.dto.UpdateMovieReviewDto
 import com.review.moviesreviewservice.exception.ReviewDataException
-import com.review.moviesreviewservice.exceptionhandler.GlobalErrorHandler
 import jakarta.validation.ConstraintViolation
 import jakarta.validation.Validator
 import org.slf4j.LoggerFactory
@@ -26,7 +25,6 @@ import java.util.stream.Collectors
 class ReviewHandlerImplV1(
     private val reviewReactiveRepository: ReviewReactiveRepository
 ):ReviewHandler {
-
     /*
     * map은 요소를 변환하고 새로운 컬렉션을 생성하는 데 사용되며,
     * flatMap은 요소를 변환하고 중첩된 컬렉션을 평탄화하여 단일 컬렉션을 생성하는 데 사용됩니다.
@@ -40,10 +38,11 @@ class ReviewHandlerImplV1(
      * 이러한 프레임워크를 사용하지 않는 경우 'lateinit' 변수에 액세스하기 전에
      * 초기화되었는지 확인하는 것은 귀하의 책임입니다.
      * **/
-    @Autowired
-    private lateinit var validator:Validator
 
-    private val log = LoggerFactory.getLogger(GlobalErrorHandler::class.java)
+    @Autowired
+    private lateinit var validator: Validator
+
+    private val log = LoggerFactory.getLogger(ReviewHandlerImplV1::class.java)
 
     val reviewSink:Sinks.Many<Review>  = Sinks.many().replay().latest()
     override fun addReview(request: ServerRequest): Mono<ServerResponse> {
@@ -55,7 +54,8 @@ class ReviewHandlerImplV1(
             // 검증이 끝났으면 저장
             .flatMap {
                 dto
-                -> reviewReactiveRepository.save(Review.of(dto))
+                -> log.info("저장")
+                reviewReactiveRepository.save(Review.of(dto))
             }
             // SSE Sink에 넣기
             .doOnNext {
@@ -68,11 +68,14 @@ class ReviewHandlerImplV1(
                     .status(HttpStatus.CREATED)
                     .bodyValue(GetMovieReviewDto.of(saved))
             }
+            .log()
     }
     // dto에 올바른 값이 들어왔는지 검증용 private 함수
     // 인위적인 validator
     private fun validate(addMovieReviewDto: AddMovieReviewDto){
-        val constraintViolation: MutableSet<ConstraintViolation<AddMovieReviewDto>> = validator.validate(addMovieReviewDto)
+        log.info("검증 시작")
+        log.info("validator : {}", validator)
+        val constraintViolation = validator.validate(addMovieReviewDto)
         log.info("필드 검증 위반 사항은 {}", constraintViolation)
         if(constraintViolation.isNotEmpty()){
             // 포착된 validation의 메세지를 ,를 붙여서 콜렉트 해서 반환해 줘
@@ -121,7 +124,7 @@ class ReviewHandlerImplV1(
         val reviewId: String = request.pathVariable("id")
         log.info("id = {}", reviewId)
 
-        return reviewReactiveRepository.findById(reviewId)
+        return reviewReactiveRepository.findByReviewId(reviewId)
             .flatMap { existingReview ->
                 request.bodyToMono(UpdateMovieReviewDto::class.java)
                     // 반응형 => flatmap
@@ -140,10 +143,10 @@ class ReviewHandlerImplV1(
     override fun deleteReview(request: ServerRequest): Mono<ServerResponse> {
         val pathVariable: String = request.pathVariable("id")
         // 해당 객체 찾기
-        val review: Mono<Review> = reviewReactiveRepository.findById(pathVariable)
+        val review: Mono<Review> = reviewReactiveRepository.findByReviewId(pathVariable)
         // Mono<ServerResponse>로 변환해야 한다.
         return review.flatMap {
-            reviewReactiveRepository.deleteById(pathVariable)
+            reviewReactiveRepository.deleteByReviewId(pathVariable)
             .then(ServerResponse.noContent().build())
         }
     }

@@ -26,6 +26,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("javax.validation:validation-api:2.0.1.Final")
 	// https://mvnrepository.com/artifact/de.flapdoodle.embed/de.flapdoodle.embed.mongo
 	testImplementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.7.0")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
